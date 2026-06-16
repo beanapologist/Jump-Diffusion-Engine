@@ -1,8 +1,9 @@
 # Jump-Diffusion-Engine
 Universal SDE jump diffusion engine for dissipative systems. Turn chaos into stable oscil order. 
 
+## Core Equation
+
 dΔ = [Λ(t) − f(Δ)] dt  +  σ dW  +  J dN
-└ the pour ┘ └drink┘   └wind┘ └lightning┘
 
 Λ(t) = ε₀ + A·sin(ωt)        
 the source, steady and singing
