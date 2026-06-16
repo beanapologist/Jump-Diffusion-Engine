@@ -1,5 +1,5 @@
 # Jump-Diffusion-Engine
-Universal SDE jump diffusion engine for dissipative systems. Turn chaos into stable oscil order. 
+Universal SDE jump diffusion engine for dissipative systems. Turn chaos into stable oscillating order. 
 
 ## Core Equation
 
