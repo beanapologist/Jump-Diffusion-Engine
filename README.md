@@ -12,6 +12,12 @@ the sink, linear then saturating
 Δ*   : Λ = f(Δ),  f′(Δ*) > 0  
 the bowl, the stable held place
 
+Use engine.py to answer: 
+    1.	Where the system wants to go (fixed points)
+	2.	How strongly is it held there (basin depth)
+	3.	How often does it escapes (risk)
+	4.	Where it spends most of its time (stationary density)
+
 ## Use Cases
 Use on any system that needs to maintain a "steady state" while being bombarded by both constant noise and sudden, unpredictable shocks.
 
