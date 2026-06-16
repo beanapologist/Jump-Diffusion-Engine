@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.optimize import root_scalar
+import matplotlib.pyplot as plt
 from typing import Callable, List, Optional, Tuple, Dict
 
 class JumpDiffusionEngine:
@@ -9,7 +10,7 @@ class JumpDiffusionEngine:
     Implements the SDE:
         dΔ = [Λ(t) − f(Δ)] dt + σ dW + J dN
     
-    Plug-and-play across domains. Simple config via functions + params.
+    Plug-and-play across domains.
     """
     
     def __init__(self, 
@@ -102,10 +103,46 @@ class JumpDiffusionEngine:
             except:
                 pass
         
-        # Deduplicate the found roots
+        # Deduplicate
         unique = []
         for fp in fixed_points:
             if not any(np.isclose(fp['x_star'], u['x_star'], atol=1e-4) for u in unique):
                 unique.append(fp)
-                
+        
         return unique
+    
+    def plot_trajectories(self, results: List[Dict], title: str = "Jump-Diffusion Trajectories", 
+                         show_energy: bool = False):
+        """Plot trajectories (and energy)."""
+        plt.figure(figsize=(12, 8))
+        ax1 = plt.subplot(211 if show_energy else 111)
+        for res in results:
+            ax1.plot(res['t'], res['x'], alpha=0.7, linewidth=1.2)
+        ax1.set_xlabel('Time')
+        ax1.set_ylabel('State Δ')
+        ax1.set_title(title)
+        ax1.grid(True)
+        
+        if show_energy and 'energy' in results[0]:
+            ax2 = plt.subplot(212, sharex=ax1)
+            for res in results:
+                ax2.plot(res['t'], res['energy'], alpha=0.7)
+            ax2.set_xlabel('Time')
+            ax2.set_ylabel('Energy')
+            ax2.grid(True)
+        
+        plt.tight_layout()
+        plt.show()
+    
+    def basin_analysis(self, lambda_val: float, x_range: Tuple[float, float] = (-10, 10)):
+        """Visualize the restoring bowl."""
+        x = np.linspace(x_range[0], x_range[1], 500)
+        plt.figure(figsize=(10, 6))
+        plt.plot(x, self.f_func(x), 'b-', label='Sink f(Δ)', linewidth=2)
+        plt.axhline(y=lambda_val, color='r', linestyle='--', label=f'Source Λ = {lambda_val:.3f}')
+        plt.xlabel('State Δ')
+        plt.ylabel('Rate')
+        plt.title('Basin of Attraction (the Bowl)')
+        plt.grid(True)
+        plt.legend()
+        plt.show()
