@@ -180,7 +180,7 @@ When training a robot to walk, you do not want it to explore so far that it brea
 ## Citation
 
 If you use this software in your research, please cite it as below.
-A Zenodo DOI will be added after the first Zenodo-backed release is published.
+A Zenodo DOI will be added after this release is archived on Zenodo.
 
 ```bibtex
 @software{SarahMarin_JumpDiffusionEngine_2026,
@@ -189,7 +189,7 @@ A Zenodo DOI will be added after the first Zenodo-backed release is published.
   year         = {2026},
   publisher    = {GitHub},
   url          = {https://github.com/beanapologist/Jump-Diffusion-Engine},
-  note         = {Version 0.1.0 – initial release. Zenodo DOI will be added after the first Zenodo-backed release.}
+  note         = {Version 0.1.0 – initial release; Zenodo archiving pending}
 }
 ```
 
