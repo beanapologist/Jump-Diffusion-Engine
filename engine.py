@@ -40,8 +40,10 @@ class JumpDiffusionEngine:
         # Use custom f_func if provided, otherwise default to self-contained nonlinear sink
         if custom_f_func is not None:
             self.f_func = custom_f_func
+            self._uses_custom_f = True
         else:
             self.f_func = self._default_sink  # now internal and uses self attrs
+            self._uses_custom_f = False
 
     def _default_sink(self, d: float) -> float:
         """Default nonlinear sink using self attributes (refactored)."""
@@ -55,7 +57,20 @@ class JumpDiffusionEngine:
         """
         Adaptive/restless k: variance-matching + EMA smoothing.
         Stronger effective reversion when system is far out (ties to z-score fade).
+
+        NOTE: if a custom f_func was supplied, it may not read self.k, in which
+        case updating self.k here has no effect on the dynamics — a silent no-op.
+        We warn once so the caller isn't misled into thinking adaptation is active.
         """
+        if getattr(self, '_uses_custom_f', False) and not getattr(self, '_warned_adaptive_custom', False):
+            import warnings
+            warnings.warn(
+                "adaptive_k is updating self.k, but a custom f_func is in use and "
+                "may ignore self.k — adaptation may have no effect. Pass a custom_f_func "
+                "that reads self.k, or disable use_adaptive_k.",
+                RuntimeWarning, stacklevel=2)
+            self._warned_adaptive_custom = True
+
         if len(recent_x) < 10:
             return self.k
 
@@ -126,8 +141,22 @@ class JumpDiffusionEngine:
         return results
 
     def _potential_at(self, x: float, lambda_val: float) -> float:
-        """Simple local approximation (full potential used in analysis)."""
-        return 0.0  # Extended in basin/potential methods
+        """
+        Potential at a single point: V(x) = ∫_0^x (f(Δ) − Λ) dΔ.
+
+        Matches the convention of potential() (which integrates from the left
+        edge of its grid); here we anchor V(0)=0. Uses a modest trapezoid
+        quadrature from 0 to x so energy recording in simulate() is meaningful
+        instead of stuck at zero. Sign of x is handled (integral reverses).
+        """
+        if x == 0.0:
+            return 0.0
+        n = max(2, int(abs(x) / max(self.dt, 1e-3)) + 1)
+        n = min(n, 2000)  # cap cost per step
+        grid = np.linspace(0.0, x, n)
+        integrand = np.array([self.f_func(xi) for xi in grid]) - lambda_val
+        return float(np.trapezoid(integrand, grid) if hasattr(np, 'trapezoid')
+                     else np.trapz(integrand, grid))
 
     # === Analysis methods (find_fixed_points, potential, basin_depth, etc.) remain unchanged ===
     # They already call self.f_func(x) which now reliably uses self.k/g/K
