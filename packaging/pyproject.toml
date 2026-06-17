@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jump-diffusion-engine"
+version = "0.1.0"
+description = "Jump diffusion simulation engine for stochastic control systems."
+readme = "../README.md"
+requires-python = ">=3.8"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Jump Diffusion Engine Contributors" }]
+dependencies = [
+  "numpy",
+  "scipy",
+  "matplotlib",
+]
