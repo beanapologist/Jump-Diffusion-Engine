@@ -1,4 +1,8 @@
 # Jump-Diffusion-Engine – Stochastic Stability Analysis
+[![CI](https://github.com/beanapologist/Jump-Diffusion-Engine/actions/workflows/ci.yml/badge.svg)](https://github.com/beanapologist/Jump-Diffusion-Engine/actions/workflows/ci.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![GitHub release](https://img.shields.io/github/v/release/beanapologist/Jump-Diffusion-Engine)](https://github.com/beanapologist/Jump-Diffusion-Engine/releases)
+
 **Simulate, analyse, and steer noisy nonlinear systems.**
 
 A simulation framework for systems with a Source (Λ(t)), a Medium (Δ), and a nonlinear Sink (f(Δ))
@@ -171,8 +175,7 @@ When training a robot to walk, you do not want it to explore so far that it brea
   year         = {2026},
   publisher    = {GitHub},
   url          = {https://github.com/beanapologist/Jump-Diffusion-Engine},
-  note         = {Versioned releases archived on Zenodo},
-  doi          = {10.5281/zenodo.XXXXXXX}
+  note         = {Versioned releases archived on Zenodo; DOI will be added after the first Zenodo-backed release}
 }
 ```
 

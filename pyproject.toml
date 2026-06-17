@@ -10,11 +10,28 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = "Apache-2.0"
 authors = [{ name = "Sarah Marin" }]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Mathematics",
+]
 dependencies = [
   "numpy>=1.23,<3.0",
   "scipy>=1.10,<2.0",
   "matplotlib>=3.7,<4.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/beanapologist/Jump-Diffusion-Engine"
+Repository = "https://github.com/beanapologist/Jump-Diffusion-Engine"
+Issues = "https://github.com/beanapologist/Jump-Diffusion-Engine/issues"
+Changelog = "https://github.com/beanapologist/Jump-Diffusion-Engine/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0"]
