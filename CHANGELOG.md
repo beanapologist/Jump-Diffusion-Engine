@@ -9,7 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 - Initial public release of Jump-Diffusion-Engine.
-- Core simulation and stochastic stability analysis methods in `engine.py`.
+- Core simulation and stochastic stability analysis methods in `jump_diffusion_engine.py`.
 - Automated test suite and CI workflow for Python 3.9–3.12.
 - Packaging metadata for setuptools-based builds.
 

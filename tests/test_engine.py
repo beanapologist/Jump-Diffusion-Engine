@@ -11,7 +11,7 @@ import os
 # Allow importing engine from the repo root when running with pytest from any cwd
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from engine import JumpDiffusionEngine
+from jump_diffusion_engine import JumpDiffusionEngine
 
 
 # ---------------------------------------------------------------------------

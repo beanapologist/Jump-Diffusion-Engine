@@ -16,7 +16,7 @@ subject to continuous diffusion and discrete jump noise.
 - `f(Δ) = kΔ + gΔ²/(K²+Δ²)` — the nonlinear sink (linear + saturating)
 - `Δ* : Λ = f(Δ), f′(Δ*) > 0` — a stable equilibrium (basin centre)
 
-Use `engine.py` to **analyse** stochastic systems and **steer** trajectories toward stable basins:
+Use `jump_diffusion_engine.py` to **analyse** stochastic systems and **steer** trajectories toward stable basins:
 
 | # | Action | Method | What it does |
 |:-|:---|:---|:---|
@@ -61,14 +61,14 @@ pip install numpy scipy matplotlib
 Then add the repository root to your Python path and import:
 
 ```python
-from engine import JumpDiffusionEngine
+from jump_diffusion_engine import JumpDiffusionEngine
 ```
 
 ## Quick Start
 
 ```python
 import numpy as np
-from engine import JumpDiffusionEngine
+from jump_diffusion_engine import JumpDiffusionEngine
 
 # Define a source: constant with a small oscillation
 def lambda_func(t):
