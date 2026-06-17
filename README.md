@@ -47,8 +47,9 @@ Then add the repository root to your Python path and import:
 from engine import JumpDiffusionEngine
 ```
 
-> **Note:** Packaging metadata lives in `packaging/pyproject.toml` (legacy) and the
-> root `pyproject.toml` (standard). Use the root `pyproject.toml` for `pip install -e .`.
+> **Note:** A legacy `packaging/pyproject.toml` is also present in the repository.
+> For standard `pip install -e .` use the root `pyproject.toml`; the `packaging/`
+> directory is kept for historical reference and may be removed in a future release.
 
 ## Quick Start
 
