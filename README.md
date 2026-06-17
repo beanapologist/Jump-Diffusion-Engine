@@ -3,10 +3,6 @@
 
 A universal stability port for any dynamic system with a Source (Λ(t)), a Medium (Δ), and a Sink (f(Δ)).
 
-## License
-
-This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**. See the `LICENSE` file for details.
-
 ## Installation
 
 This project requires Python 3 and the libraries used by `engine.py`:
@@ -122,3 +118,7 @@ When training a robot to walk, you do not want it to explore so far that it brea
 - **The Sink (`f`):** A penalty in the code that gets stronger as the robot gets closer to falling.
 - **The Jumps (`J`):** A person pushing the robot or an uneven floor.
 - **Use Case:** Ensuring the robot's brain always stays within a safe operational basin.
+
+## License
+
+This project is licensed under the **Apache License 2.0**. See the `LICENSE` file for details.
