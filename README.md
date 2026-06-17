@@ -3,6 +3,21 @@
 
 A universal stability port for any dynamic system with a Source (Λ(t)), a Medium (Δ), and a Sink (f(Δ)).
 
+## Core Equation
+
+`dΔ = [Λ(t) − f(Δ)] dt + σ dW + J dN`
+
+- `Λ(t) = ε₀ + A·sin(ωt)` — the source, steady and singing
+- `f(Δ) = kΔ + gΔ²/(K²+Δ²)` — the sink, linear then saturating
+- `Δ* : Λ = f(Δ), f′(Δ*) > 0` — the bowl, the stable held place
+
+Use `engine.py` to answer:
+
+1. Where the system wants to go (fixed points)
+2. How strongly it is held there (basin depth)
+3. How often it escapes (risk)
+4. Where it spends most of its time (stationary density)
+
 ## Installation
 
 This project requires Python 3 and the libraries used by `engine.py`:
@@ -22,21 +37,6 @@ Then import the engine in your Python code:
 ```python
 from engine import JumpDiffusionEngine
 ```
-
-## Core Equation
-
-`dΔ = [Λ(t) − f(Δ)] dt + σ dW + J dN`
-
-- `Λ(t) = ε₀ + A·sin(ωt)` — the source, steady and singing
-- `f(Δ) = kΔ + gΔ²/(K²+Δ²)` — the sink, linear then saturating
-- `Δ* : Λ = f(Δ), f′(Δ*) > 0` — the bowl, the stable held place
-
-Use `engine.py` to answer:
-
-1. Where the system wants to go (fixed points)
-2. How strongly it is held there (basin depth)
-3. How often it escapes (risk)
-4. Where it spends most of its time (stationary density)
 
 ## Use Cases
 
