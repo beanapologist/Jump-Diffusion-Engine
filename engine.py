@@ -469,7 +469,10 @@ class JumpDiffusionEngine:
     def stationary_density(self, lambda_val: float, x_range: Tuple[float, float] = (-10, 10), n_points: int = 2000):
         x = np.linspace(x_range[0], x_range[1], n_points)
         V = self.potential(x, lambda_val)
-        p = np.exp(-2 * V / (self.sigma ** 2 + 1e-12))
+        # Shift V by its minimum before exponentiation to avoid numerical overflow.
+        # The constant shift cancels exactly in the normalisation.
+        V_shifted = V - np.min(V)
+        p = np.exp(-2 * V_shifted / (self.sigma ** 2 + 1e-12))
         norm = np.trapezoid(p, x) if hasattr(np, 'trapezoid') else np.trapz(p, x)
         p /= (norm + 1e-12)
         return x, p
@@ -567,10 +570,47 @@ class JumpDiffusionEngine:
         plt.tight_layout()
         plt.show()
 
-    # Plotting helpers (plot_trajectories, plot_potential, basin_analysis) unchanged
     def plot_trajectories(self, results: List[Dict], title: str = "Jump-Diffusion Trajectories", show_energy: bool = False):
-        # ... (standard implementation as before)
-        pass  # Replace with full from previous if needed
+        """Plot simulated trajectories from simulate().
+
+        Parameters
+        ----------
+        results : list of dicts returned by simulate()
+        title   : figure title
+        show_energy : if True and energy was recorded, add a second panel
+        """
+        has_energy = show_energy and any('energy' in r for r in results)
+        n_panels = 2 if has_energy else 1
+        fig, axes = plt.subplots(n_panels, 1, figsize=(10, 4 * n_panels), squeeze=False)
+        ax_traj = axes[0, 0]
+
+        for i, r in enumerate(results):
+            label = f"Run {i + 1}" if len(results) > 1 else None
+            ax_traj.plot(r['t'], r['x'], lw=0.8, alpha=0.7, label=label)
+
+        ax_traj.set_xlabel("Time")
+        ax_traj.set_ylabel("Δ")
+        ax_traj.set_title(title)
+        ax_traj.grid(True, alpha=0.3)
+        if len(results) > 1:
+            ax_traj.legend(fontsize=8)
+
+        if has_energy:
+            ax_en = axes[1, 0]
+            for i, r in enumerate(results):
+                if 'energy' in r:
+                    label = f"Run {i + 1}" if len(results) > 1 else None
+                    ax_en.plot(r['t'], r['energy'], lw=0.8, alpha=0.7, label=label)
+            ax_en.set_xlabel("Time")
+            ax_en.set_ylabel("Energy V(Δ)")
+            ax_en.set_title("Potential Energy")
+            ax_en.grid(True, alpha=0.3)
+            if len(results) > 1:
+                ax_en.legend(fontsize=8)
+
+        plt.tight_layout()
+        plt.show()
+        return fig
 
 # Quick test / usage
 if __name__ == "__main__":
