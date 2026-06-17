@@ -16,7 +16,7 @@ subject to continuous diffusion and discrete jump noise.
 - `f(Δ) = kΔ + gΔ²/(K²+Δ²)` — the nonlinear sink (linear + saturating)
 - `Δ* : Λ = f(Δ), f′(Δ*) > 0` — a stable equilibrium (basin centre)
 
-Use `engine.py` to **analyse** stochastic systems and **steer** trajectories toward stable basins:
+Use `jump_diffusion_engine.py` to **analyse** stochastic systems and **steer** trajectories toward stable basins:
 
 | # | Action | Method | What it does |
 |:-|:---|:---|:---|
@@ -29,17 +29,30 @@ Use `engine.py` to **analyse** stochastic systems and **steer** trajectories tow
 
 ## Installation
 
-**Standard install (recommended)**
+> **Note:** PyPI publishing is not yet configured. Install directly from a GitHub release or from a local clone.
+
+**Install from a GitHub release (end users)**
+
+After the `v0.1.0` tag is published as a GitHub Release, install with:
 
 ```bash
+pip install "jump-diffusion-engine @ https://github.com/beanapologist/Jump-Diffusion-Engine/archive/refs/tags/v0.1.0.tar.gz"
+```
+
+Replace `v0.1.0` with the tag you want. All releases are listed on the
+[Releases page](https://github.com/beanapologist/Jump-Diffusion-Engine/releases).
+
+**Editable install from source (contributors)**
+
+```bash
+git clone https://github.com/beanapologist/Jump-Diffusion-Engine.git
+cd Jump-Diffusion-Engine
 pip install -e .
 ```
 
-This installs the package and all dependencies from the root of the repository.
-
 **Manual dependency install**
 
-If you prefer not to use the package install, install dependencies directly:
+If you prefer not to install the package, install dependencies directly:
 
 ```bash
 pip install numpy scipy matplotlib
@@ -48,14 +61,14 @@ pip install numpy scipy matplotlib
 Then add the repository root to your Python path and import:
 
 ```python
-from engine import JumpDiffusionEngine
+from jump_diffusion_engine import JumpDiffusionEngine
 ```
 
 ## Quick Start
 
 ```python
 import numpy as np
-from engine import JumpDiffusionEngine
+from jump_diffusion_engine import JumpDiffusionEngine
 
 # Define a source: constant with a small oscillation
 def lambda_func(t):
@@ -164,6 +177,11 @@ When training a robot to walk, you do not want it to explore so far that it brea
 - **The Jumps (`J`):** A person pushing the robot or an uneven floor.
 - **Use Case:** Ensuring the robot's brain always stays within a safe operational basin.
 
+## Citation
+
+If you use this software in your research, please cite it as below.
+A Zenodo DOI will be added after this release is archived on Zenodo.
+
 ```bibtex
 @software{SarahMarin_JumpDiffusionEngine_2026,
   author       = {Sarah Marin},
@@ -171,7 +189,7 @@ When training a robot to walk, you do not want it to explore so far that it brea
   year         = {2026},
   publisher    = {GitHub},
   url          = {https://github.com/beanapologist/Jump-Diffusion-Engine},
-  note         = {Versioned releases archived on Zenodo; DOI will be added after the first Zenodo-backed release}
+  note         = {Version 0.1.0 – initial release; Zenodo archiving pending}
 }
 ```
 

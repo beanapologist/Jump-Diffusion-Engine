@@ -53,7 +53,7 @@ jobs:
       - name: Verify wheel installs cleanly
         run: |
           pip install dist/*.whl
-          python -c "from engine import JumpDiffusionEngine; print('import OK')"
+          python -c "from jump_diffusion_engine import JumpDiffusionEngine; print('import OK')"
 
       - name: Upload distributions
         uses: actions/upload-artifact@v4
