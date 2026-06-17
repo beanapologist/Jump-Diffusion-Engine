@@ -1,6 +1,6 @@
-# Jump-Diffusion-Engine
-
-Universal SDE jump-diffusion engine for dissipative systems. Turn chaos into stable oscillating order.
+# Jump-Diffusion-Engine – Perfectly Balanced Stochastic Control
+**One set of inputs. Continuous, self-regulating outputs.**
+A universal stability port for any dynamic system with a Source (Λ(t)), a Medium (Δ), and a Sink (f(Δ)).
 
 ## License
 
