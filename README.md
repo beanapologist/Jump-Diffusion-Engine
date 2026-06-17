@@ -11,12 +11,16 @@ A universal stability port for any dynamic system with a Source (Λ(t)), a Mediu
 - `f(Δ) = kΔ + gΔ²/(K²+Δ²)` — the sink, linear then saturating
 - `Δ* : Λ = f(Δ), f′(Δ*) > 0` — the bowl, the stable held place
 
-Use `engine.py` to answer:
+Use `engine.py` to **force** any stochastic system into its stable basin, then **verify** its resilience:
 
-1. Where the system wants to go (fixed points)
-2. How strongly it is held there (basin depth)
-3. How often it escapes (risk)
-4. Where it spends most of its time (stationary density)
+| # | Action | Method | What it does |
+|:-|:---|:---|:---|
+| 1 | **FORCE** it into the bowl | `seat_and_release()` | Applies a transient push, then **releases control to zero**. The basin holds it forever. |
+| 2 | **BREATHE** with the noise | `adaptive_k()` | Dynamically stiffens when calm, relaxes when volatile. Prevents numerical blow-up while maximizing rejection. |
+| 3 | **MAP** where the bowls are | `find_fixed_points()` | Finds all stable (`f′>0`) and unstable equilibria before you force it. |
+| 4 | **MEASURE** how deep the bowl is | `basin_depth()` | Quantifies the energy barrier—how hard you'd have to push to knock it out. |
+| 5 | **PREDICT** escape risk | `escape_probability()` | Empirical escape rate over Monte Carlo trials. Should be near-zero after seating. |
+| 6 | **VISUALIZE** the long-term cloud | `stationary_density()` | The normalized PDF \( p(\Delta) \propto e^{-2V/\sigma^2} \)—where it lives once forced. |
 
 ## Installation
 
