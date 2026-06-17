@@ -1,6 +1,9 @@
 # Jump-Diffusion-Engine
 Universal SDE jump diffusion engine for dissipative systems. Turn chaos into stable oscillating order. 
 
+## License
+This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**. See the `LICENSE` file for details.
+
 ## Core Equation
 
 dΔ = [Λ(t) − f(Δ)] dt  +  σ dW  +  J dN
@@ -82,5 +85,3 @@ When training a robot to walk, you don't want it to explore so far that it break
 *   **Use Case:** Ensuring the robot's "brain" always stays within a safe operational "basin."
 
 ---
-
-
