@@ -123,6 +123,18 @@ When training a robot to walk, you do not want it to explore so far that it brea
 - **The Jumps (`J`):** A person pushing the robot or an uneven floor.
 - **Use Case:** Ensuring the robot's brain always stays within a safe operational basin.
 
+```bibtex
+@software{SarahMarin_JumpDiffusionEngine_2026,
+  author       = {Sarah Marin},
+  title        = {JumpDiffusionEngine: A Universal Framework for Multistable Stochastic Control},
+  year         = {2026},
+  publisher    = {GitHub},
+  url          = {https://github.com/beanapologist/Jump-Diffusion-Engine},
+  note         = {Versioned releases archived on Zenodo},
+  doi          = {10.5281/zenodo.XXXXXXX}
+}
+```
+
 ## License
 
 This project is licensed under the **Apache License 2.0**. See the `LICENSE` file for details.
