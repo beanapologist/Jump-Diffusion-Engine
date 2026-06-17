@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "Jump-Diffusion-Engine"
+abstract: "A universal framework for multistable stochastic control."
+type: software
+authors:
+  - family-names: "Bean"
+    given-names: "Apostologist"
+repository-code: "https://github.com/beanapologist/Jump-Diffusion-Engine"
+url: "https://github.com/beanapologist/Jump-Diffusion-Engine"
+license: "Apache-2.0"
+keywords:
+  - stochastic control
+  - jump diffusion
+  - multistability
+  - dynamical systems
