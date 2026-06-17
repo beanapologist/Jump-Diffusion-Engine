@@ -1,3 +1,19 @@
+Metadata-Version: 2.4
+Name: jump-diffusion-engine
+Version: 0.1.0
+Summary: Jump diffusion simulation engine for stochastic control systems.
+Author: Sarah Marin
+License-Expression: Apache-2.0
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: numpy<3.0,>=1.23
+Requires-Dist: scipy<2.0,>=1.10
+Requires-Dist: matplotlib<4.0,>=3.7
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0; extra == "dev"
+Dynamic: license-file
+
 # Jump-Diffusion-Engine – Stochastic Stability Analysis
 **Simulate, analyse, and steer noisy nonlinear systems.**
 

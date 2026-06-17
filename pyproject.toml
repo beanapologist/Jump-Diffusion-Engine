@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jump-diffusion-engine"
+version = "0.1.0"
+description = "Jump diffusion simulation engine for stochastic control systems."
+readme = "README.md"
+requires-python = ">=3.9"
+license = "Apache-2.0"
+authors = [{ name = "Sarah Marin" }]
+dependencies = [
+  "numpy>=1.23,<3.0",
+  "scipy>=1.10,<2.0",
+  "matplotlib>=3.7,<4.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[tool.setuptools]
+py-modules = ["engine"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,6 +1,7 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 title: "Jump Diffusion Engine"
+version: "0.1.0"
 abstract: "A universal framework for multistable stochastic control."
 type: software
 authors:
