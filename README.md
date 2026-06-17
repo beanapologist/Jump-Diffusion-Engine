@@ -16,7 +16,7 @@ subject to continuous diffusion and discrete jump noise.
 - `f(Δ) = kΔ + gΔ²/(K²+Δ²)` — the nonlinear sink (linear + saturating)
 - `Δ* : Λ = f(Δ), f′(Δ*) > 0` — a stable equilibrium (basin centre)
 
-Use `jump_diffusion_engine.py` to **analyse** stochastic systems and **steer** trajectories toward stable basins:
+Use the `jump_diffusion_engine/` package to **analyse** stochastic systems and **steer** trajectories toward stable basins:
 
 | # | Action | Method | What it does |
 |:-|:---|:---|:---|
@@ -47,7 +47,7 @@ Replace `v0.1.0` with the tag you want. All releases are listed on the
 ```bash
 git clone https://github.com/beanapologist/Jump-Diffusion-Engine.git
 cd Jump-Diffusion-Engine
-pip install -e .
+pip install -e ".[dev]"
 ```
 
 **Manual dependency install**
@@ -58,7 +58,7 @@ If you prefer not to install the package, install dependencies directly:
 pip install numpy scipy matplotlib
 ```
 
-Then add the repository root to your Python path and import:
+Then add the repository root to your Python path and import from the package:
 
 ```python
 from jump_diffusion_engine import JumpDiffusionEngine

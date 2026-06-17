@@ -36,8 +36,8 @@ Changelog = "https://github.com/beanapologist/Jump-Diffusion-Engine/blob/main/CH
 [project.optional-dependencies]
 dev = ["pytest>=7.0"]
 
-[tool.setuptools]
-py-modules = ["jump_diffusion_engine"]
+[tool.setuptools.packages.find]
+include = ["jump_diffusion_engine"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
