@@ -5,11 +5,6 @@ that hold with very high probability, to avoid brittle flakiness.
 """
 import numpy as np
 import pytest
-import sys
-import os
-
-# Allow importing engine from the repo root when running with pytest from any cwd
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from jump_diffusion_engine import JumpDiffusionEngine
 
@@ -31,6 +26,11 @@ def engine():
         g=0.5,
         K=2.0,
     )
+
+
+def test_public_import_uses_package_layout():
+    """The public import should resolve through the dedicated package."""
+    assert JumpDiffusionEngine.__module__ == "jump_diffusion_engine.engine"
 
 
 # ---------------------------------------------------------------------------
