@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Jump diffusion simulation engine for stochastic control systems."
 readme = "README.md"
 requires-python = ">=3.9"
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
 authors = [{ name = "Sarah Marin" }]
 dependencies = [
   "numpy>=1.23,<3.0",

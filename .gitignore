@@ -1,0 +1,23 @@
+# Build / distribution artifacts
+*.egg-info/
+build/
+dist/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Test / coverage artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Editor / OS
+.DS_Store
+*.swp

@@ -3,8 +3,8 @@ Name: jump-diffusion-engine
 Version: 0.1.0
 Summary: Jump diffusion simulation engine for stochastic control systems.
 Author: Sarah Marin
-License: Apache-2.0
-Requires-Python: >=3.8
+License-Expression: Apache-2.0
+Requires-Python: >=3.9
 Description-Content-Type: text/markdown
 License-File: LICENSE
 Requires-Dist: numpy<3.0,>=1.23
@@ -63,8 +63,9 @@ Then add the repository root to your Python path and import:
 from engine import JumpDiffusionEngine
 ```
 
-> **Note:** Packaging metadata lives in `packaging/pyproject.toml` (legacy) and the
-> root `pyproject.toml` (standard). Use the root `pyproject.toml` for `pip install -e .`.
+> **Note:** A legacy `packaging/pyproject.toml` is also present in the repository.
+> For standard `pip install -e .` use the root `pyproject.toml`; the `packaging/`
+> directory is kept for historical reference and may be removed in a future release.
 
 ## Quick Start
 
