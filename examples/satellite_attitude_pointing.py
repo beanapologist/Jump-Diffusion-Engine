@@ -52,7 +52,7 @@ hw = b['half_width']
 hw_str = f"{hw:.3f}" if hw is not None else "None (single global bowl, no opposing wall in range)"
 print(f"contained after release within half_width={hw_str}: {res['contained_after_release']}")
 
-esc = eng.escape_probability(threshold=3.0, t_max=300.0, x_star=0.0, n_trials=200)
+esc = eng.escape_probability(threshold=3.0, t_max=300.0, x_star=0.0, n_trials=1000)
 print(f"\nescape probability (|Δ|>3deg within 300 time units, from rest at boresight): {esc:.3f}")
 
 # plot
@@ -74,5 +74,7 @@ ax[1].axvline(0, c='gray', lw=0.6)
 ax[1].set(title="Restoring sink f(Δ) — odd-symmetric", xlabel="pointing error Δ (deg)", ylabel="f(Δ)")
 
 fig.tight_layout()
+import os
+os.makedirs(os.path.dirname('/home/claude/sat/satellite.png'), exist_ok=True)
 fig.savefig('/home/claude/sat/satellite.png', dpi=130)
 print("\nsaved -> satellite.png")
