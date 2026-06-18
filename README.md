@@ -39,9 +39,6 @@ After the `v0.1.0` tag is published as a GitHub Release, install with:
 pip install "jump-diffusion-engine @ https://github.com/beanapologist/Jump-Diffusion-Engine/archive/refs/tags/v0.1.0.tar.gz"
 ```
 
-Replace `v0.1.0` with the tag you want. All releases are listed on the
-[Releases page](https://github.com/beanapologist/Jump-Diffusion-Engine/releases).
-
 **Editable install from source (contributors)**
 
 ```bash
