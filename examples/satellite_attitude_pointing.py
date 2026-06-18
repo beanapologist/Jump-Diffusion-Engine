@@ -74,7 +74,3 @@ ax[1].axvline(0, c='gray', lw=0.6)
 ax[1].set(title="Restoring sink f(Δ) — odd-symmetric", xlabel="pointing error Δ (deg)", ylabel="f(Δ)")
 
 fig.tight_layout()
-import os
-os.makedirs(os.path.dirname('/home/claude/sat/satellite.png'), exist_ok=True)
-fig.savefig('/home/claude/sat/satellite.png', dpi=130)
-print("\nsaved -> satellite.png")
