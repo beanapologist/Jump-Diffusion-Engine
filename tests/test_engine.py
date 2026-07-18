@@ -498,3 +498,80 @@ class TestPlotTrajectories:
                                   record_energy=False)
         fig = engine.plot_trajectories(results)
         assert fig is not None
+
+
+# ---------------------------------------------------------------------------
+# markov_generator
+# ---------------------------------------------------------------------------
+
+class TestMarkovGenerator:
+    """Tests for the safer column-generator approach to building L."""
+
+    N = 50   # small grid for fast tests
+
+    def test_returns_expected_keys(self, engine):
+        out = engine.markov_generator(lambda_val=0.5, n_points=self.N)
+        for key in ('L', 'x', 'dx', 'rate_up', 'rate_down'):
+            assert key in out, f"Missing key: {key}"
+
+    def test_matrix_shape(self, engine):
+        out = engine.markov_generator(lambda_val=0.5, n_points=self.N)
+        L = out['L']
+        assert L.shape == (self.N, self.N), f"Expected ({self.N},{self.N}), got {L.shape}"
+
+    def test_column_sums_are_zero(self, engine):
+        """Safer column-generator: each column must sum to exactly zero."""
+        out = engine.markov_generator(lambda_val=0.5, n_points=self.N)
+        col_sums = out['L'].sum(axis=0)
+        np.testing.assert_allclose(
+            col_sums, 0.0, atol=1e-12,
+            err_msg="Column sums of generator matrix are not zero"
+        )
+
+    def test_diagonal_equals_negative_rate_sum(self, engine):
+        """L[n, n] == -(rate_up[n] + rate_down[n]) for every n."""
+        out = engine.markov_generator(lambda_val=0.5, n_points=self.N)
+        L = out['L']
+        diag = np.diag(L)
+        expected = -(out['rate_up'] + out['rate_down'])
+        np.testing.assert_allclose(
+            diag, expected, atol=1e-14,
+            err_msg="Diagonal entries do not equal -(rate_up + rate_down)"
+        )
+
+    def test_off_diagonal_non_negative(self, engine):
+        """All off-diagonal entries must be ≥ 0 (valid transition rates)."""
+        out = engine.markov_generator(lambda_val=0.5, n_points=self.N)
+        L = out['L']
+        off_diag = L - np.diag(np.diag(L))
+        assert np.all(off_diag >= -1e-14), "Off-diagonal entries contain negative values"
+
+    def test_tridiagonal_structure(self, engine):
+        """Generator matrix for a diffusion should be tridiagonal."""
+        out = engine.markov_generator(lambda_val=0.5, n_points=self.N)
+        L = out['L']
+        # All entries more than one step from the diagonal must be zero.
+        for i in range(self.N):
+            for j in range(self.N):
+                if abs(i - j) > 1:
+                    assert L[i, j] == 0.0, (
+                        f"Non-zero entry at L[{i},{j}]={L[i,j]} (not tridiagonal)"
+                    )
+
+    def test_boundary_rates_are_zero(self, engine):
+        """Absorbing boundaries: rate_up[-1] and rate_down[0] must be zero."""
+        out = engine.markov_generator(lambda_val=0.5, n_points=self.N)
+        assert out['rate_up'][-1] == 0.0, "rate_up at last node should be zero"
+        assert out['rate_down'][0] == 0.0, "rate_down at first node should be zero"
+
+    def test_grid_length_matches_n_points(self, engine):
+        n = 30
+        out = engine.markov_generator(lambda_val=0.5, n_points=n)
+        assert len(out['x']) == n
+        assert len(out['rate_up']) == n
+        assert len(out['rate_down']) == n
+
+    def test_dx_matches_grid(self, engine):
+        out = engine.markov_generator(lambda_val=0.5, n_points=self.N)
+        expected_dx = (out['x'][-1] - out['x'][0]) / (self.N - 1)
+        assert abs(out['dx'] - expected_dx) < 1e-12
