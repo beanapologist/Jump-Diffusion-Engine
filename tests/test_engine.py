@@ -397,11 +397,15 @@ class TestJumpOperator:
         results = {}
         for scale in [0.4, 1.8]:
             J = scale * J_c
+
+            def _make_jump(size):
+                return lambda: size
+
             eng = JumpDiffusionEngine(
                 lambda_func=lambda t: 0.5,
                 sigma=0.05,
                 jump_rate=0.2,
-                jump_size_dist=lambda _J=J: _J,   # deterministic jump size
+                jump_size_dist=_make_jump(J),   # deterministic jump size
                 dt=0.01,
                 seed=42,
                 **bistable_kwargs,
