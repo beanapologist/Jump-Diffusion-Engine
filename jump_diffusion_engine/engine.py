@@ -523,7 +523,7 @@ class JumpDiffusionEngine:
         """
         Build the Markov generator matrix L for the discretized SDE.
 
-        Discretises the state space into ``n_points`` grid nodes and constructs
+        Discretizes the state space into ``n_points`` grid nodes and constructs
         the (n_points × n_points) transition-rate matrix using the upwind
         Fokker–Planck finite-difference scheme.  The diagonal is set via the
         *safer column-generator approach*::

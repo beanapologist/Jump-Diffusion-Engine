@@ -574,4 +574,4 @@ class TestMarkovGenerator:
     def test_dx_matches_grid(self, engine):
         out = engine.markov_generator(lambda_val=0.5, n_points=self.N)
         expected_dx = (out['x'][-1] - out['x'][0]) / (self.N - 1)
-        assert abs(out['dx'] - expected_dx) < 1e-12
+        np.testing.assert_allclose(out['dx'], expected_dx, atol=1e-12)
