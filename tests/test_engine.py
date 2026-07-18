@@ -231,6 +231,249 @@ class TestSimulate:
 
 
 # ---------------------------------------------------------------------------
+# jump_operator
+# ---------------------------------------------------------------------------
+
+class TestJumpOperator:
+    """
+    Rigorous tests for 𝒥f(x) = λ ∫ [f(x+z) − f(x)] ν(dz|x).
+
+    All MC tests use seed=0 and n_samples=100_000 for tight tolerances.
+    """
+
+    # --- helpers shared across tests ---
+
+    def _engine_with_jumps(self, jump_rate=0.5):
+        """Engine with Gaussian jump kernel N(0,1), fixed seed."""
+        return JumpDiffusionEngine(
+            lambda_func=lambda t: 0.5,
+            sigma=0.3,
+            jump_rate=jump_rate,
+            dt=0.01,
+            seed=42,
+        )
+
+    N = 100_000   # MC samples — enough for 3-decimal accuracy on smooth f
+
+    # 1. Annihilates constants -------------------------------------------------
+
+    def test_constant_function_gives_zero(self):
+        eng = self._engine_with_jumps()
+        f = lambda x: 7.0
+        for x in [-2.0, 0.0, 1.5, 3.0]:
+            result = eng.jump_operator(f, x, n_samples=self.N, seed=0)
+            assert abs(result) < 1e-10, (
+                f"Jf should be 0 for constant f, got {result} at x={x}"
+            )
+
+    # 2. Zero when jump_rate = 0 -----------------------------------------------
+
+    def test_zero_jump_rate_gives_zero(self):
+        eng = self._engine_with_jumps(jump_rate=0.0)
+        f = lambda x: x**2 + np.sin(x)
+        for x in [-1.0, 0.0, 2.5]:
+            result = eng.jump_operator(f, x, n_samples=self.N, seed=0)
+            assert result == 0.0, (
+                f"Jf must be exactly 0 when jump_rate=0, got {result}"
+            )
+
+    # 3. Linearity: 𝒥(αf + βg) = α𝒥f + β𝒥g ------------------------------------
+
+    def test_linearity_in_f(self):
+        eng = self._engine_with_jumps()
+        f = lambda x: x**2
+        g = lambda x: np.cos(x)
+        alpha, beta = 3.0, -2.0
+        h = lambda x: alpha * f(x) + beta * g(x)
+
+        for x in [0.5, 1.0, 2.0]:
+            Jf = eng.jump_operator(f, x, n_samples=self.N, seed=0)
+            Jg = eng.jump_operator(g, x, n_samples=self.N, seed=0)
+            Jh = eng.jump_operator(h, x, n_samples=self.N, seed=0)
+            expected = alpha * Jf + beta * Jg
+            assert abs(Jh - expected) < 0.02, (
+                f"Linearity failed at x={x}: J(αf+βg)={Jh:.6f}, "
+                f"αJf+βJg={expected:.6f}"
+            )
+
+    # 4. Quadratic identity (analytical): f=x², N(0,1) kernel → 𝒥f(x) = λ -----
+
+    def test_quadratic_identity(self):
+        """
+        For f(x)=x² and Z~N(0,1):
+          𝒥f(x) = λ · E[(x+Z)² − x²]
+                = λ · E[2xZ + Z²]
+                = λ · (2x · 0 + 1) = λ
+        Result is independent of x.
+        """
+        lam = 0.5
+        eng = self._engine_with_jumps(jump_rate=lam)
+        f = lambda x: x**2
+        for x in [-3.0, 0.0, 1.0, 4.0]:
+            result = eng.jump_operator(f, x, n_samples=self.N, seed=0)
+            assert abs(result - lam) < 0.02, (
+                f"Quadratic identity: expected {lam}, got {result:.5f} at x={x}"
+            )
+
+    # 5. Linear f has zero jump operator under symmetric kernel ----------------
+
+    def test_linear_function_zero_under_symmetric_kernel(self):
+        """
+        For f(x)=x and Z~N(0,1) (symmetric, mean 0):
+          𝒥f(x) = λ · E[(x+Z) − x] = λ · E[Z] = 0
+        """
+        eng = self._engine_with_jumps()
+        f = lambda x: x
+        for x in [-1.0, 0.0, 2.0]:
+            result = eng.jump_operator(f, x, n_samples=self.N, seed=0)
+            assert abs(result) < 0.02, (
+                f"Linear f under symmetric kernel: expected 0, got {result:.5f} at x={x}"
+            )
+
+    # 6. Flat obstruction: 𝒥f(0⁺) ≠ 0 even though f'(0)=0 (all orders) --------
+
+    def test_flat_obstruction_nonzero(self):
+        """
+        f(x) = e^{-1/x}  (x>0),  0 otherwise — a flat obstruction.
+
+        All derivatives vanish at x=0 → drift and diffusion terms go to zero.
+        Yet 𝒥f(0⁺) > 0 because the jump kernel puts weight on x>0 where f>0.
+        This is the fundamental non-locality of 𝒥.
+        """
+        eng = self._engine_with_jumps(jump_rate=1.0)
+
+        def flat_f(x):
+            return float(np.exp(-1.0 / x)) if x > 1e-10 else 0.0
+
+        # At x→0⁺ with Gaussian jumps, about half the destinations are positive.
+        # E[f(0+Z)] = E[e^{-1/Z} · 1_{Z>0}] > 0  → 𝒥f(0⁺) > 0.
+        result = eng.jump_operator(flat_f, 0.0, n_samples=self.N, seed=0)
+        assert result > 0.0, (
+            f"Flat obstruction: 𝒥f(0⁺) must be > 0, got {result:.6f}"
+        )
+
+        # Confirm that local terms (drift b·f' and diffusion ½σ²f'') are 0 at x=0.
+        # All derivatives of e^{-1/x} vanish as x→0⁺.
+        h = 1e-6
+        f_prime_approx = (flat_f(h) - flat_f(0.0)) / h
+        assert abs(f_prime_approx) < 1e-100, (
+            f"f'(0⁺) should be 0 (flat point), got {f_prime_approx}"
+        )
+
+    # 7. Crossing condition: cliff, not slope ----------------------------------
+
+    def test_crossing_condition_cliff_not_slope(self):
+        """
+        Demonstrates the crossing condition J > J_c = Δ_edge − Δ*.
+
+        Uses a fixed-size jump distribution: all jumps equal J (deterministic).
+        Below J_c:  escape_probability stays low (≤ 0.15).
+        Above J_c:  escape_probability jumps sharply (≥ 0.50).
+
+        The cliff shape — not a gradual slope — reflects that the nonlocal
+        operator either reaches over the basin wall or it does not.
+
+        Uses a bistable parameter regime (k=0.5, g=2.0, K=1.0) so the basin
+        walls are well-defined unstable fixed points.
+        """
+        bistable_kwargs = dict(k=0.5, g=2.0, K=1.0)
+        eng_base = JumpDiffusionEngine(
+            lambda_func=lambda t: 0.5,
+            sigma=0.05,
+            jump_rate=0.2,
+            dt=0.01,
+            seed=42,
+            **bistable_kwargs,
+        )
+        boundary = eng_base.identify_boundary(lambda_val=0.5)
+        x_star = boundary['x_star']
+        half_width = boundary['half_width']
+
+        if half_width is None or x_star is None:
+            pytest.skip("No well-defined basin found for crossing test")
+
+        J_c = half_width   # minimum jump to clear the basin edge
+
+        results = {}
+        for scale in [0.4, 1.8]:
+            J = scale * J_c
+            eng = JumpDiffusionEngine(
+                lambda_func=lambda t: 0.5,
+                sigma=0.05,
+                jump_rate=0.2,
+                jump_size_dist=lambda _J=J: _J,   # deterministic jump size
+                dt=0.01,
+                seed=42,
+                **bistable_kwargs,
+            )
+            results[scale] = eng.escape_probability(
+                threshold=J_c * 0.9,
+                t_max=20.0,
+                x0=x_star,
+                x_star=x_star,
+                n_trials=80,
+            )
+
+        p_below = results[0.4]
+        p_above = results[1.8]
+        assert p_below < 0.15, (
+            f"Crossing condition (below J_c): expected P < 0.15, got {p_below:.3f}"
+        )
+        assert p_above > 0.50, (
+            f"Crossing condition (above J_c): expected P > 0.50, got {p_above:.3f}"
+        )
+        assert p_above > p_below + 0.35, (
+            f"Cliff: gap P_above−P_below should be > 0.35, got {p_above - p_below:.3f}"
+        )
+
+    # 8. Scaling with jump_rate ------------------------------------------------
+
+    def test_scales_linearly_with_jump_rate(self):
+        """𝒥f(x) is proportional to λ (rate doubles → operator doubles)."""
+        f = lambda x: x**3
+        x = 1.5
+        lam1, lam2 = 0.5, 1.0
+        eng1 = self._engine_with_jumps(jump_rate=lam1)
+        eng2 = self._engine_with_jumps(jump_rate=lam2)
+        J1 = eng1.jump_operator(f, x, n_samples=self.N, seed=0)
+        J2 = eng2.jump_operator(f, x, n_samples=self.N, seed=0)
+        # Both use the same seed → same z draws → ratio should equal lam2/lam1
+        ratio = J2 / J1 if abs(J1) > 1e-12 else None
+        if ratio is not None:
+            assert abs(ratio - (lam2 / lam1)) < 0.05, (
+                f"Expected ratio {lam2/lam1}, got {ratio:.4f}"
+            )
+
+    # 9. Custom kernel is respected -------------------------------------------
+
+    def test_custom_kernel_respected(self):
+        """With a custom jump_size_dist, 𝒥 uses that distribution."""
+        # Positive-only jumps: Z ~ Exp(1).  For f(x)=x:
+        #   𝒥f(x) = λ · E[Z] = λ · 1 = λ
+        lam = 0.6
+        rng_inner = np.random.default_rng(99)
+
+        def exp_kernel():
+            return rng_inner.exponential(1.0)
+
+        eng = JumpDiffusionEngine(
+            lambda_func=lambda t: 0.5,
+            sigma=0.3,
+            jump_rate=lam,
+            jump_size_dist=exp_kernel,
+            dt=0.01,
+            seed=42,
+        )
+        f = lambda x: x
+        x = 2.0
+        result = eng.jump_operator(f, x, n_samples=self.N, seed=None)
+        # E[Z] = 1 for Exp(1) → 𝒥f(x)=λ
+        assert abs(result - lam) < 0.05, (
+            f"Custom Exp(1) kernel: expected 𝒥f ≈ {lam}, got {result:.4f}"
+        )
+
+
+# ---------------------------------------------------------------------------
 # plot_trajectories (non-display smoke test)
 # ---------------------------------------------------------------------------
 

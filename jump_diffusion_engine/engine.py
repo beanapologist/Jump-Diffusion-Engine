@@ -466,6 +466,57 @@ class JumpDiffusionEngine:
             'contained_after_release': contained,
         }
 
+    def jump_operator(self, f: Callable[[float], float], x: float,
+                      n_samples: int = 50_000,
+                      seed: Optional[int] = 0) -> float:
+        """
+        Evaluate the jump operator at a single point via Monte Carlo integration.
+
+        Definition (Lévy–Khintchine nonlocal part):
+
+            𝒥f(x) = λ(x) ∫ [f(x+z) − f(x)] ν(dz|x)
+
+        where λ(x) is the jump rate and ν(dz|x) is the jump kernel (where to
+        land).  For the default Gaussian kernel ν = N(0,1) this reduces to:
+
+            𝒥f(x) = jump_rate · E_Z[f(x+Z) − f(x)],  Z ~ N(0,1)
+
+        Key properties (each covered by a test):
+          • Annihilates constants:    f = c  →  𝒥f = 0
+          • Zero without jumps:       jump_rate = 0  →  𝒥f = 0
+          • Linear in f:              𝒥(αf + βg) = α𝒥f + β𝒥g
+          • Quadratic identity:       f(x)=x², kernel N(0,1)  →  𝒥f(x) = λ
+          • Flat obstruction (non-zero at smooth flat points):
+                f(x) = e^{-1/x} (x>0), f(0)=0 — all derivatives vanish at 0,
+                yet 𝒥f(0⁺) > 0.  Local operators (drift, diffusion) go to zero;
+                the nonlocal operator does not.
+
+        Parameters
+        ----------
+        f         : test function callable, f: float → float
+        x         : evaluation point
+        n_samples : MC sample count (higher → lower variance)
+        seed      : integer seed for the MC RNG (None → use self.rng)
+
+        Returns
+        -------
+        float : Monte Carlo estimate of 𝒥f(x)
+        """
+        lam = self.jump_rate(x) if callable(self.jump_rate) else float(self.jump_rate)
+        if lam == 0.0:
+            return 0.0
+
+        rng = np.random.default_rng(seed) if seed is not None else self.rng
+
+        if self.jump_size_dist is None:
+            z = rng.normal(0.0, 1.0, size=n_samples)
+        else:
+            z = np.array([self.jump_size_dist() for _ in range(n_samples)])
+
+        fx = f(x)
+        increments = np.vectorize(f)(x + z) - fx
+        return float(lam * np.mean(increments))
+
     def stationary_density(self, lambda_val: float, x_range: Tuple[float, float] = (-10, 10), n_points: int = 2000):
         x = np.linspace(x_range[0], x_range[1], n_points)
         V = self.potential(x, lambda_val)

@@ -8,6 +8,77 @@
 A simulation framework for systems with a Source (Λ(t)), a Medium (Δ), and a nonlinear Sink (f(Δ))
 subject to continuous diffusion and discrete jump noise.
 
+## The Jump Operator 𝒥
+
+Every Markov generator decomposes uniquely (**Lévy–Khintchine**) as:
+
+```
+ℒ = b ∂ₓ + ½σ² ∂ₓ²   +   𝒥
+    ────────────────       ─
+         local           nonlocal
+```
+
+There is no fourth term.  Any process that moves is drift, diffusion, or jump — and 𝒥 is the only term that evaluates *f at the destination* rather than derivatives at the origin.
+
+### Definition
+
+```
+𝒥f(x) = λ(x) ∫ [f(x+z) − f(x)] ν(dz|x)
+```
+
+| Symbol   | Role | This engine |
+|:---------|:-----|:------------|
+| `λ(x)`   | **Rate** — *when* jumps occur | `jump_rate` parameter |
+| `ν(dz\|x)` | **Kernel** — *where* to land | `jump_size_dist` parameter (default: N(0,1)) |
+
+Use `engine.jump_operator(f, x)` to evaluate 𝒥 numerically for any test function.
+
+### Confirmed properties
+
+The implementation is verified by the `TestJumpOperator` suite:
+
+| Property | Result |
+|:---------|:-------|
+| **Annihilates constants** | `f = c → 𝒥f = 0` (exactly) |
+| **Zero without jumps** | `jump_rate = 0 → 𝒥f = 0` (exactly) |
+| **Linear in `f`** | `𝒥(αf + βg) = α𝒥f + β𝒥g` |
+| **Quadratic identity** | `f(x) = x²`, kernel N(0,1): `𝒥f(x) = λ` (independent of `x`) |
+| **Symmetric-kernel identity** | `f(x) = x`, kernel N(0,1): `𝒥f(x) = 0` |
+| **Scales with rate** | Doubling `λ` doubles `𝒥f` |
+| **Respects custom kernel** | `f(x)=x`, Exp(1) kernel: `𝒥f(x) = λ·E[Z] = λ` |
+
+### The flat-obstruction property
+
+For the smooth flat function `f(x) = e^{−1/x}` (x > 0), `f(0) = 0`:
+
+```
+b f′(0) + ½σ² f″(0)  →  0   (all derivatives vanish at the flat point)
+𝒥f(0⁺)               >  0   (jump kernel has positive weight on x > 0)
+```
+
+Local operators are blind to a flat wall.  **𝒥 is not.**  This is why nonlocal dynamics can cross obstructions that purely diffusive noise cannot.
+
+### The crossing condition
+
+In a bistable potential the basin edge sits at distance `J_c = Δ_edge − Δ*` from the equilibrium.
+
+```
+J < J_c  →  P(escape) ≈ 0      (jump cannot clear the wall)
+J > J_c  →  P(escape) ≫ 0     (jump clears in a single step)
+```
+
+This is a **cliff, not a slope**.  The `test_crossing_condition_cliff_not_slope` test confirms empirically: `P_below < 0.15`, `P_above > 0.50`, gap `> 0.35`.
+
+### SDE form
+
+```
+dΔₜ = −Γ′(Δ*)(Δₜ − Δ*) dt  +  σ dWₜ  +  J dNₜ(λ)
+```
+
+- `dt` holds the trajectory in the bowl.
+- `dW` explores continuously.
+- **`dN` arrives** — and when `J > J_c`, it crosses.
+
 ## Core Equation
 
 `dΔ = [Λ(t) − f(Δ)] dt + σ dW + J dN`
