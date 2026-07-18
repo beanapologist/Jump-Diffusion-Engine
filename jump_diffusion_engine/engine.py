@@ -466,6 +466,143 @@ class JumpDiffusionEngine:
             'contained_after_release': contained,
         }
 
+    def jump_operator(self, f: Callable[[float], float], x: float,
+                      n_samples: int = 50_000,
+                      seed: Optional[int] = 0) -> float:
+        """
+        Evaluate the jump operator at a single point via Monte Carlo integration.
+
+        Definition (Lévy–Khintchine nonlocal part):
+
+            𝒥f(x) = λ(x) ∫ [f(x+z) − f(x)] ν(dz|x)
+
+        where λ(x) is the jump rate and ν(dz|x) is the jump kernel (where to
+        land).  For the default Gaussian kernel ν = N(0,1) this reduces to:
+
+            𝒥f(x) = jump_rate · E_Z[f(x+Z) − f(x)],  Z ~ N(0,1)
+
+        Key properties (each covered by a test):
+          • Annihilates constants:    f = c  →  𝒥f = 0
+          • Zero without jumps:       jump_rate = 0  →  𝒥f = 0
+          • Linear in f:              𝒥(αf + βg) = α𝒥f + β𝒥g
+          • Quadratic identity:       f(x)=x², kernel N(0,1)  →  𝒥f(x) = λ
+          • Flat obstruction (non-zero at smooth flat points):
+                f(x) = e^{-1/x} (x>0), f(0)=0 — all derivatives vanish at 0,
+                yet 𝒥f(0⁺) > 0.  Local operators (drift, diffusion) go to zero;
+                the nonlocal operator does not.
+
+        Parameters
+        ----------
+        f         : test function callable, f: float → float
+        x         : evaluation point
+        n_samples : MC sample count (higher → lower variance)
+        seed      : integer seed for the MC RNG (None → use self.rng)
+
+        Returns
+        -------
+        float : Monte Carlo estimate of 𝒥f(x)
+        """
+        lam = self.jump_rate(x) if callable(self.jump_rate) else float(self.jump_rate)
+        if lam == 0.0:
+            return 0.0
+
+        rng = np.random.default_rng(seed) if seed is not None else self.rng
+
+        if self.jump_size_dist is None:
+            z = rng.normal(0.0, 1.0, size=n_samples)
+        else:
+            z = np.array([self.jump_size_dist() for _ in range(n_samples)])
+
+        fx = f(x)
+        increments = np.vectorize(f)(x + z) - fx
+        return float(lam * np.mean(increments))
+
+    def markov_generator(self, lambda_val: float,
+                         x_range: Tuple[float, float] = (-10, 10),
+                         n_points: int = 200) -> Dict:
+        """
+        Build the Markov generator matrix L for the discretized SDE.
+
+        Discretizes the state space into ``n_points`` grid nodes and constructs
+        the (n_points × n_points) transition-rate matrix using the upwind
+        Fokker–Planck finite-difference scheme.  The diagonal is set via the
+        *safer column-generator approach*::
+
+            L[n, n] = -(rate_up + rate_down)
+
+        so that each column sums to exactly zero by construction, rather than
+        being derived as a residual (which can accumulate floating-point error).
+
+        Off-diagonal entries (non-zero only for nearest neighbours):
+
+        * ``L[n+1, n] = rate_up[n]``   — upward transition from state n
+        * ``L[n-1, n] = rate_down[n]`` — downward transition from state n
+
+        Transition rates are computed from the drift ``μ(x) = Λ − f(x)`` and
+        diffusion coefficient ``σ`` via the standard upwind decomposition:
+
+        .. math::
+
+            r_\\mathrm{up}[n]   = \\max(\\mu(x_n),\\,0)/dx + \\sigma^2/(2\\,dx^2)
+
+            r_\\mathrm{down}[n] = \\max(-\\mu(x_n),\\,0)/dx + \\sigma^2/(2\\,dx^2)
+
+        Boundary nodes (n=0 and n=N−1) are treated as absorbing: their
+        off-grid rates are dropped and the diagonal is adjusted accordingly.
+
+        Parameters
+        ----------
+        lambda_val : float
+            Constant forcing Λ used to evaluate the drift μ = Λ − f(Δ).
+        x_range : (float, float)
+            Extent of the discretised state space.
+        n_points : int
+            Number of grid nodes (matrix size n_points × n_points).
+
+        Returns
+        -------
+        dict with keys:
+
+        * ``'L'``      — (n_points, n_points) ndarray, the generator matrix
+        * ``'x'``      — (n_points,) ndarray, grid node positions
+        * ``'dx'``     — float, uniform grid spacing
+        * ``'rate_up'``   — (n_points,) ndarray, upward rates at each node
+        * ``'rate_down'`` — (n_points,) ndarray, downward rates at each node
+        """
+        x = np.linspace(x_range[0], x_range[1], n_points)
+        dx = x[1] - x[0]
+
+        # Drift at each grid node: μ(x) = Λ − f(x)
+        mu = np.array([lambda_val - self.f_func(xi) for xi in x])
+
+        # Upwind rates (non-negative by construction)
+        rate_up   = np.maximum(mu, 0.0) / dx + self.sigma**2 / (2.0 * dx**2)
+        rate_down = np.maximum(-mu, 0.0) / dx + self.sigma**2 / (2.0 * dx**2)
+
+        # Boundary nodes: no off-grid transitions
+        rate_up[-1]   = 0.0
+        rate_down[0]  = 0.0
+
+        # --- Safer column-generator approach ---
+        # Fill super- and sub-diagonal first, then set diagonal explicitly so
+        # each column sums to exactly zero without relying on residual arithmetic.
+        L = np.zeros((n_points, n_points))
+
+        for n in range(n_points):
+            if n < n_points - 1:
+                L[n + 1, n] = rate_up[n]    # upward neighbour receives this rate
+            if n > 0:
+                L[n - 1, n] = rate_down[n]  # downward neighbour receives this rate
+            L[n, n] = -(rate_up[n] + rate_down[n])  # diagonal: exact negative sum
+
+        return {
+            'L': L,
+            'x': x,
+            'dx': float(dx),
+            'rate_up': rate_up,
+            'rate_down': rate_down,
+        }
+
     def stationary_density(self, lambda_val: float, x_range: Tuple[float, float] = (-10, 10), n_points: int = 2000):
         x = np.linspace(x_range[0], x_range[1], n_points)
         V = self.potential(x, lambda_val)

@@ -16,6 +16,22 @@ subject to continuous diffusion and discrete jump noise.
 - `f(Δ) = kΔ + gΔ²/(K²+Δ²)` — the nonlinear sink (linear + saturating)
 - `Δ* : Λ = f(Δ), f′(Δ*) > 0` — a stable equilibrium (basin centre)
 
+### The Jump Operator 𝒥
+
+Every Markov generator decomposes uniquely (**Lévy–Khintchine**) as `ℒ = b∂ₓ + ½σ²∂ₓ² + 𝒥` — drift, diffusion, jump, no fourth term. 𝒥 is the only term that evaluates *f at the destination* rather than derivatives at the origin.
+
+```
+𝒥f(x) = λ(x) ∫ [f(x+z) − f(x)] ν(dz|x)
+```
+
+`λ(x)` is the jump rate (`jump_rate`); `ν(dz|x)` is the jump kernel (`jump_size_dist`, default N(0,1)). Use `engine.jump_operator(f, x)` to evaluate 𝒥 numerically.
+
+**Confirmed properties** (verified by `TestJumpOperator`): annihilates constants · linear in `f` · quadratic identity `𝒥(x²) = λ` for N(0,1) kernel · zero under symmetric kernel for linear `f` · scales with rate · respects custom kernel.
+
+**Flat obstruction** — at a flat point `f(x) = e^{−1/x}` all derivatives vanish, so drift and diffusion go to zero. `𝒥f(0⁺) > 0` regardless. Local operators are blind to a flat wall; `𝒥` is not.
+
+**Crossing condition** — basin half-width `J_c = Δ_edge − Δ*`. Below `J_c`: `P(escape) ≈ 0`. Above: `P(escape) ≫ 0`. A cliff, not a slope.
+
 Use the `jump_diffusion_engine/` package to **analyse** stochastic systems and **steer** trajectories toward stable basins:
 
 | # | Action | Method | What it does |
