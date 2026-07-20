@@ -1,7 +1,81 @@
+import warnings
+
 import numpy as np
 from scipy.optimize import root_scalar
 import matplotlib.pyplot as plt
 from typing import Callable, List, Optional, Tuple, Dict
+
+
+def ergodic_components(L: np.ndarray, rtol: float = 1e-9) -> int:
+    """Number of ergodic components of a column-generator matrix.
+
+    For a conservative generator (columns sum to zero), dim ker(L) equals
+    the number of closed communicating classes: each component carries its
+    own stationary distribution, so the zero eigenvalue has one copy per
+    component. Computed via SVD (robust to non-normality): the count of
+    singular values below ``rtol * s_max``.
+
+    Discrete check of the gcd law: for a ring of N sites with jump channels
+    {k_i}, dim ker(L) = gcd(k_1, ..., k_m, N). Anything downstream that
+    assumes a *unique* stationary distribution (stationary densities,
+    transfer times, spectral gaps) silently requires this to return 1.
+    """
+    s = np.linalg.svd(np.asarray(L, dtype=float), compute_uv=False)
+    if s.size == 0:
+        return 0
+    smax = s[0] if s[0] > 0 else 1.0
+    return int(np.sum(s < rtol * smax))
+
+
+def ring_generator(N: int, channels: Dict[int, float]) -> np.ndarray:
+    """Conservative column-generator for jump channels on the ring Z_N.
+
+    ``channels`` maps a (signed) step dn to a rate. Steps are taken mod N;
+    dn ≡ 0 (mod N) is a no-op. Columns sum to zero by construction.
+    """
+    L = np.zeros((N, N))
+    for i in range(N):
+        for dn, r in channels.items():
+            j = (i + dn) % N
+            if j != i and r > 0:
+                L[j, i] += r
+                L[i, i] -= r
+    return L
+
+
+def reduce_ring(N: int, channels: Dict[int, float]) -> Dict:
+    """Exact decimation of a ring jump generator to its coprime core.
+
+    Since gcd(m·k, N) = m·gcd(k, N/m) for m | N, the cosets mod
+    g = gcd(all steps, N) are exactly invariant, and
+
+        L_N(channels)  ≅  I_g ⊗ L_{N/g}(channels/g)      (permutation-similar)
+
+    so the full spectrum is the core spectrum with multiplicity g, and
+    dim ker(L_N) = g. Returns the core parameters; analyses (spectra,
+    mixing rates, transfer times) can be run on the (N/g)-site core and
+    replicated g times at zero error.
+
+    Returns
+    -------
+    dict with keys 'g' (sector count / multiplicity), 'N_core',
+    'channels_core', 'L_core'.
+    """
+    from math import gcd as _gcd
+    g = N
+    for dn in channels:
+        g = _gcd(g, dn % N)
+    if g == 0:          # all steps were multiples of N: nothing moves
+        return {'g': N, 'N_core': 1, 'channels_core': {}, 'L_core': np.zeros((1, 1))}
+    N_core = N // g
+    ch_core: Dict[int, float] = {}
+    for dn, r in channels.items():
+        dn_c = ((dn % N) // g) % N_core
+        if dn_c != 0 and r > 0:
+            ch_core[dn_c] = ch_core.get(dn_c, 0.0) + r
+    return {'g': g, 'N_core': N_core, 'channels_core': ch_core,
+            'L_core': ring_generator(N_core, ch_core)}
+
 
 class JumpDiffusionEngine:
     """
@@ -595,12 +669,22 @@ class JumpDiffusionEngine:
                 L[n - 1, n] = rate_down[n]  # downward neighbour receives this rate
             L[n, n] = -(rate_up[n] + rate_down[n])  # diagonal: exact negative sum
 
+        n_comp = ergodic_components(L)
+        if n_comp != 1:
+            warnings.warn(
+                f"markov_generator: generator has {n_comp} ergodic components; "
+                "stationary quantities and transfer times are ill-defined "
+                "(initial-condition dependent).",
+                RuntimeWarning
+            )
+
         return {
             'L': L,
             'x': x,
             'dx': float(dx),
             'rate_up': rate_up,
             'rate_down': rate_down,
+            'n_components': n_comp,
         }
 
     def stationary_density(self, lambda_val: float, x_range: Tuple[float, float] = (-10, 10), n_points: int = 2000):
