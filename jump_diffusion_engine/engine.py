@@ -65,12 +65,10 @@ def reduce_ring(N: int, channels: Dict[int, float]) -> Dict:
     g = N
     for dn in channels:
         g = _gcd(g, dn % N)
-    if g == 0:          # all steps were multiples of N: nothing moves
-        return {'g': N, 'N_core': 1, 'channels_core': {}, 'L_core': np.zeros((1, 1))}
     N_core = N // g
-    ch_core: Dict[int, float] = {}
+    ch_core = {}
     for dn, r in channels.items():
-        dn_c = ((dn % N) // g) % N_core
+        dn_c = (dn % N) // g
         if dn_c != 0 and r > 0:
             ch_core[dn_c] = ch_core.get(dn_c, 0.0) + r
     return {'g': g, 'N_core': N_core, 'channels_core': ch_core,
