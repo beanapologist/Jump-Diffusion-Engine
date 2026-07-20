@@ -1,4 +1,5 @@
 import warnings
+from math import gcd as _gcd
 
 import numpy as np
 from scipy.optimize import root_scalar
@@ -47,21 +48,23 @@ def reduce_ring(N: int, channels: Dict[int, float]) -> Dict:
     """Exact decimation of a ring jump generator to its coprime core.
 
     Since gcd(m·k, N) = m·gcd(k, N/m) for m | N, the cosets mod
-    g = gcd(all steps, N) are exactly invariant, and
+    g = GCD(all steps, N) are exactly invariant, and
 
         L_N(channels)  ≅  I_g ⊗ L_{N/g}(channels/g)      (permutation-similar)
 
     so the full spectrum is the core spectrum with multiplicity g, and
     dim ker(L_N) = g. Returns the core parameters; analyses (spectra,
     mixing rates, transfer times) can be run on the (N/g)-site core and
-    replicated g times at zero error.
+    replicated g times at zero error. If ``channels`` is empty then no jumps
+    occur and the reduction yields ``g = N`` and ``N_core = 1``.
+    When multiple channels map to the same reduced step, their rates are
+    aggregated in ``channels_core``.
 
     Returns
     -------
     dict with keys 'g' (sector count / multiplicity), 'N_core',
     'channels_core', 'L_core'.
     """
-    from math import gcd as _gcd
     g = N
     for dn in channels:
         g = _gcd(g, dn % N)
