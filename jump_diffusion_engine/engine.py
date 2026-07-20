@@ -67,11 +67,13 @@ def reduce_ring(N: int, channels: Dict[int, float]) -> Dict:
     """
     g = N
     for dn in channels:
-        g = _gcd(g, dn % N)
+        dn_mod = ((dn % N) + N) % N
+        g = _gcd(g, dn_mod)
     N_core = N // g
     ch_core = {}
     for dn, r in channels.items():
-        dn_c = (dn % N) // g
+        dn_mod = ((dn % N) + N) % N
+        dn_c = dn_mod // g
         if dn_c != 0 and r > 0:
             ch_core[dn_c] = ch_core.get(dn_c, 0.0) + r
     return {'g': g, 'N_core': N_core, 'channels_core': ch_core,
