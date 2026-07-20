@@ -25,7 +25,7 @@ def ergodic_components(L: np.ndarray, rtol: float = 1e-9) -> int:
     if s.size == 0:
         return 0
     smax = s[0] if s[0] > 0 else 1.0
-    return int(np.sum(s < rtol * smax))
+    return int(np.sum(s <= rtol * smax))
 
 
 def ring_generator(N: int, channels: Dict[int, float]) -> np.ndarray:
@@ -66,13 +66,14 @@ def reduce_ring(N: int, channels: Dict[int, float]) -> Dict:
     'channels_core', 'L_core'.
     """
     g = N
+    mod_n = lambda dn: ((dn % N) + N) % N
     for dn in channels:
-        dn_mod = ((dn % N) + N) % N
+        dn_mod = mod_n(dn)
         g = _gcd(g, dn_mod)
     N_core = N // g
     ch_core = {}
     for dn, r in channels.items():
-        dn_mod = ((dn % N) + N) % N
+        dn_mod = mod_n(dn)
         dn_c = dn_mod // g
         if dn_c != 0 and r > 0:
             ch_core[dn_c] = ch_core.get(dn_c, 0.0) + r
