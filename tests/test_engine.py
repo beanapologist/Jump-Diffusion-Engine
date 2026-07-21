@@ -6,7 +6,7 @@ that hold with very high probability, to avoid brittle flakiness.
 import numpy as np
 import pytest
 
-from jump_diffusion_engine import JumpDiffusionEngine
+from jump_diffusion_engine import JumpDiffusionEngine, reduce_ring
 
 
 # ---------------------------------------------------------------------------
@@ -498,6 +498,25 @@ class TestPlotTrajectories:
                                   record_energy=False)
         fig = engine.plot_trajectories(results)
         assert fig is not None
+
+
+# ---------------------------------------------------------------------------
+# reduce_ring
+# ---------------------------------------------------------------------------
+
+class TestReduceRing:
+    def test_gcd_uses_only_active_channels(self):
+        out = reduce_ring(12, {2: 1.0, 3: -5.0, 6: 0.0})
+        assert out['g'] == 2
+        assert out['N_core'] == 6
+        assert out['channels_core'] == {1: 1.0}
+
+    def test_effectively_empty_channels_reduce_to_trivial_core(self):
+        out = reduce_ring(12, {1: 0.0, -1: -2.0, 12: 4.0})
+        assert out['g'] == 12
+        assert out['N_core'] == 1
+        assert out['channels_core'] == {}
+        np.testing.assert_allclose(out['L_core'], np.zeros((1, 1)))
 
 
 # ---------------------------------------------------------------------------

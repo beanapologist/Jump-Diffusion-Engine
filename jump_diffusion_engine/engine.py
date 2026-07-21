@@ -55,8 +55,10 @@ def reduce_ring(N: int, channels: Dict[int, float]) -> Dict:
     so the full spectrum is the core spectrum with multiplicity g, and
     dim ker(L_N) = g. Returns the core parameters; analyses (spectra,
     mixing rates, transfer times) can be run on the (N/g)-site core and
-    replicated g times at zero error. If ``channels`` is empty then no jumps
-    occur and the reduction yields ``g = N`` and ``N_core = 1``.
+    replicated g times at zero error. If no *active* channels remain after
+    applying the same acceptance rule as ``ring_generator`` (positive rate and
+    non-zero modular step), then no jumps occur and the reduction yields
+    ``g = N`` and ``N_core = 1``.
     When multiple channels map to the same reduced step, their rates are
     aggregated in ``channels_core``.
 
@@ -65,18 +67,23 @@ def reduce_ring(N: int, channels: Dict[int, float]) -> Dict:
     dict with keys 'g' (sector count / multiplicity), 'N_core',
     'channels_core', 'L_core'.
     """
-    g = N
     mod_n = lambda dn: ((dn % N) + N) % N
-    for dn in channels:
-        dn_mod = mod_n(dn)
-        g = _gcd(g, dn_mod)
-    N_core = N // g
-    ch_core = {}
-    for dn, r in channels.items():
-        dn_mod = mod_n(dn)
-        dn_c = dn_mod // g
-        if dn_c != 0 and r > 0:
+    active = [(mod_n(dn), r) for dn, r in channels.items() if r > 0 and mod_n(dn) != 0]
+
+    if not active:
+        g = N
+        N_core = 1
+        ch_core = {}
+    else:
+        g = N
+        for dn_mod, _ in active:
+            g = _gcd(g, dn_mod)
+        N_core = N // g
+        ch_core = {}
+        for dn_mod, r in active:
+            dn_c = dn_mod // g
             ch_core[dn_c] = ch_core.get(dn_c, 0.0) + r
+
     return {'g': g, 'N_core': N_core, 'channels_core': ch_core,
             'L_core': ring_generator(N_core, ch_core)}
 
