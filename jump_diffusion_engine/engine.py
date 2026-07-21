@@ -68,7 +68,11 @@ def reduce_ring(N: int, channels: Dict[int, float]) -> Dict:
     'channels_core', 'L_core'.
     """
     mod_n = lambda dn: ((dn % N) + N) % N
-    active = [(mod_n(dn), r) for dn, r in channels.items() if r > 0 and mod_n(dn) != 0]
+    active = []
+    for dn, r in channels.items():
+        dn_mod = mod_n(dn)
+        if r > 0 and dn_mod != 0:
+            active.append((dn_mod, r))
 
     if not active:
         g = N
