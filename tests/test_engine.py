@@ -529,12 +529,13 @@ class TestEntropyProduction:
         rate_fwd = 1.7
         rate_bwd = 0.4
         L = ring_generator(N, {1: rate_fwd, -1: rate_bwd})
-        w, v = np.linalg.eig(L)
-        p = np.real(v[:, np.argmin(np.abs(w))])
-        if p.sum() < 0:
-            p = -p
-        p = np.clip(p, 0.0, None)
-        p /= p.sum()
+        A = np.vstack([L, np.ones(N)])
+        b = np.zeros(N + 1)
+        b[-1] = 1.0
+        p, *_ = np.linalg.lstsq(A, b, rcond=None)
+        np.testing.assert_allclose(L @ p, 0.0, rtol=0, atol=1e-12)
+        np.testing.assert_allclose(p.sum(), 1.0, rtol=0, atol=1e-12)
+        assert np.all(p > 0.0)
 
         ep = 0.0
         bond_currents = []
