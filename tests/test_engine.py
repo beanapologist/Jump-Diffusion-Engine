@@ -529,9 +529,16 @@ class TestEntropyProduction:
         rate_fwd = 1.7
         rate_bwd = 0.4
         L = ring_generator(N, {1: rate_fwd, -1: rate_bwd})
-        p = np.full(N, 1.0 / N)
+        w, v = np.linalg.eig(L)
+        p = np.real(v[:, np.argmin(np.abs(w))])
+        if p.sum() < 0:
+            p = -p
+        p = np.clip(p, 0.0, None)
+        p /= p.sum()
 
         ep = 0.0
+        bond_currents = []
+        affinity = 0.0
         for i in range(N):
             j = (i + 1) % N
             f_ij = L[j, i] * p[i]
@@ -539,10 +546,12 @@ class TestEntropyProduction:
             assert f_ij > 0.0 and f_ji > 0.0
             J = f_ij - f_ji
             A = np.log(f_ij / f_ji)
+            bond_currents.append(J)
+            affinity += A
             ep += J * A
 
-        current = (rate_fwd - rate_bwd) / N
-        affinity = N * np.log(rate_fwd / rate_bwd)
+        current = float(np.mean(bond_currents))
+        np.testing.assert_allclose(bond_currents, current, rtol=0, atol=1e-12)
         np.testing.assert_allclose(ep, current * affinity, rtol=0, atol=1e-12)
 
 
