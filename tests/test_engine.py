@@ -6,7 +6,7 @@ that hold with very high probability, to avoid brittle flakiness.
 import numpy as np
 import pytest
 
-from jump_diffusion_engine import JumpDiffusionEngine
+from jump_diffusion_engine import JumpDiffusionEngine, reduce_ring, ring_generator
 
 
 # ---------------------------------------------------------------------------
@@ -498,6 +498,62 @@ class TestPlotTrajectories:
                                   record_energy=False)
         fig = engine.plot_trajectories(results)
         assert fig is not None
+
+
+# ---------------------------------------------------------------------------
+# reduce_ring
+# ---------------------------------------------------------------------------
+
+class TestReduceRing:
+    def test_gcd_uses_only_active_channels(self):
+        out = reduce_ring(12, {2: 1.0, 3: -5.0, 6: 0.0})
+        assert out['g'] == 2
+        assert out['N_core'] == 6
+        assert out['channels_core'] == {1: 1.0}
+
+    def test_effectively_empty_channels_reduce_to_trivial_core(self):
+        out = reduce_ring(12, {1: 0.0, -1: -2.0, 12: 4.0})
+        assert out['g'] == 12
+        assert out['N_core'] == 1
+        assert out['channels_core'] == {}
+        np.testing.assert_allclose(out['L_core'], np.zeros((1, 1)))
+
+
+# ---------------------------------------------------------------------------
+# entropy production
+# ---------------------------------------------------------------------------
+
+class TestEntropyProduction:
+    def test_entropy_production_equals_current_times_affinity(self):
+        N = 7
+        rate_fwd = 1.7
+        rate_bwd = 0.4
+        L = ring_generator(N, {1: rate_fwd, -1: rate_bwd})
+        A = np.vstack([L, np.ones(N)])
+        b = np.zeros(N + 1)
+        b[-1] = 1.0
+        p = np.linalg.lstsq(A, b, rcond=None)[0]
+        np.testing.assert_allclose(L @ p, 0.0, rtol=0, atol=1e-12)
+        np.testing.assert_allclose(p.sum(), 1.0, rtol=0, atol=1e-12)
+        assert np.all(p > 0.0)
+
+        entropy_production = 0.0
+        bond_currents = []
+        affinity = 0.0
+        for i in range(N):
+            j = (i + 1) % N
+            f_ij = L[j, i] * p[i]
+            f_ji = L[i, j] * p[j]
+            assert f_ij > 0.0 and f_ji > 0.0
+            bond_current = f_ij - f_ji
+            bond_affinity = np.log(f_ij / f_ji)
+            bond_currents.append(bond_current)
+            affinity += bond_affinity
+            entropy_production += bond_current * bond_affinity
+
+        current = float(np.mean(bond_currents))
+        np.testing.assert_allclose(bond_currents, current, rtol=0, atol=1e-12)
+        np.testing.assert_allclose(entropy_production, current * affinity, rtol=0, atol=1e-12)
 
 
 # ---------------------------------------------------------------------------
