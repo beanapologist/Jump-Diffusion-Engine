@@ -536,6 +536,7 @@ class TestEntropyProduction:
             j = (i + 1) % N
             f_ij = L[j, i] * p[i]
             f_ji = L[i, j] * p[j]
+            assert f_ij > 0.0 and f_ji > 0.0
             J = f_ij - f_ji
             A = np.log(f_ij / f_ji)
             ep += J * A
