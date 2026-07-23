@@ -537,7 +537,7 @@ class TestEntropyProduction:
         np.testing.assert_allclose(p.sum(), 1.0, rtol=0, atol=1e-12)
         assert np.all(p > 0.0)
 
-        ep = 0.0
+        entropy_production = 0.0
         bond_currents = []
         affinity = 0.0
         for i in range(N):
@@ -549,11 +549,11 @@ class TestEntropyProduction:
             bond_affinity = np.log(f_ij / f_ji)
             bond_currents.append(bond_current)
             affinity += bond_affinity
-            ep += bond_current * bond_affinity
+            entropy_production += bond_current * bond_affinity
 
         current = float(np.mean(bond_currents))
         np.testing.assert_allclose(bond_currents, current, rtol=0, atol=1e-12)
-        np.testing.assert_allclose(ep, current * affinity, rtol=0, atol=1e-12)
+        np.testing.assert_allclose(entropy_production, current * affinity, rtol=0, atol=1e-12)
 
 
 # ---------------------------------------------------------------------------
