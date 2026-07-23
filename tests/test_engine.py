@@ -545,11 +545,11 @@ class TestEntropyProduction:
             f_ij = L[j, i] * p[i]
             f_ji = L[i, j] * p[j]
             assert f_ij > 0.0 and f_ji > 0.0
-            J = f_ij - f_ji
-            A = np.log(f_ij / f_ji)
-            bond_currents.append(J)
-            affinity += A
-            ep += J * A
+            bond_current = f_ij - f_ji
+            bond_affinity = np.log(f_ij / f_ji)
+            bond_currents.append(bond_current)
+            affinity += bond_affinity
+            ep += bond_current * bond_affinity
 
         current = float(np.mean(bond_currents))
         np.testing.assert_allclose(bond_currents, current, rtol=0, atol=1e-12)
