@@ -532,7 +532,7 @@ class TestEntropyProduction:
         A = np.vstack([L, np.ones(N)])
         b = np.zeros(N + 1)
         b[-1] = 1.0
-        p, *_ = np.linalg.lstsq(A, b, rcond=None)
+        p = np.linalg.lstsq(A, b, rcond=None)[0]
         np.testing.assert_allclose(L @ p, 0.0, rtol=0, atol=1e-12)
         np.testing.assert_allclose(p.sum(), 1.0, rtol=0, atol=1e-12)
         assert np.all(p > 0.0)
