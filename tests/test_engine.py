@@ -6,7 +6,7 @@ that hold with very high probability, to avoid brittle flakiness.
 import numpy as np
 import pytest
 
-from jump_diffusion_engine import JumpDiffusionEngine, reduce_ring
+from jump_diffusion_engine import JumpDiffusionEngine, reduce_ring, ring_generator
 
 
 # ---------------------------------------------------------------------------
@@ -517,6 +517,32 @@ class TestReduceRing:
         assert out['N_core'] == 1
         assert out['channels_core'] == {}
         np.testing.assert_allclose(out['L_core'], np.zeros((1, 1)))
+
+
+# ---------------------------------------------------------------------------
+# entropy production
+# ---------------------------------------------------------------------------
+
+class TestEntropyProduction:
+    def test_entropy_production_equals_current_times_affinity(self):
+        N = 7
+        rate_fwd = 1.7
+        rate_bwd = 0.4
+        L = ring_generator(N, {1: rate_fwd, -1: rate_bwd})
+        p = np.full(N, 1.0 / N)
+
+        ep = 0.0
+        for i in range(N):
+            j = (i + 1) % N
+            f_ij = L[j, i] * p[i]
+            f_ji = L[i, j] * p[j]
+            J = f_ij - f_ji
+            A = np.log(f_ij / f_ji)
+            ep += J * A
+
+        current = (rate_fwd - rate_bwd) / N
+        affinity = N * np.log(rate_fwd / rate_bwd)
+        np.testing.assert_allclose(ep, current * affinity, rtol=0, atol=1e-12)
 
 
 # ---------------------------------------------------------------------------
